@@ -7,18 +7,35 @@ import { IFilter } from "./Filters/IFilter";
 export interface ITableProps<T> {
   values: T[];
   children: JSX.Element | JSX.Element[];
+  initRowsPerPage?: number;
+  initValuesNumber?: number;
 }
 
 export function Table<T>(props: ITableProps<T>) {
   const { 
-    children, 
-    values,
+    children,
+    initRowsPerPage,
+    initValuesNumber,
+    values: currentValues,
   } = props;
   const [filters, setFilter] = React.useState<IFilters>({});
   const [sortBy, setSortBy] = React.useState<TSortBy>({ key: "", order: Order.ASC });
-  const [valuesNumber] = React.useState(values.length);
+  const [valuesNumber, setValuesNumber] = React.useState(0);
   const [page, setPage] = React.useState(1);
   const [rowsPerPage, setRowsPerPage] = React.useState(0);
+  const [values, setValues] = React.useState(currentValues);
+
+  React.useEffect(() => {
+    setValuesNumber(initValuesNumber || values.length);
+  }, [initValuesNumber, values]);
+
+  React.useEffect(() => {
+    setRowsPerPage(initRowsPerPage || 10);
+  }, [initRowsPerPage]);
+
+  React.useEffect(() => {
+    setValues(currentValues);
+  }, [setValues, currentValues]);
 
   const addFilter = React.useCallback((key: TKey, value: IFilter<TFilterValues>) => {
     setFilter({...filters, [key]: value});
@@ -41,10 +58,14 @@ export function Table<T>(props: ITableProps<T>) {
   }, [page, setPage]);
 
   const changeRowsPerPage = React.useCallback((value: number) => {
-    if (rowsPerPage <= valuesNumber) {
+    if (value <= valuesNumber) {
       setRowsPerPage(value);
     }
-  }, [rowsPerPage, setRowsPerPage, valuesNumber]);
+  }, [setRowsPerPage, valuesNumber]);
+
+  const changeValuesNumber = React.useCallback((value: number) => {
+    setValuesNumber(value);
+  }, [setValuesNumber])
 
   return (
     <TableContext.Provider value={{
@@ -58,13 +79,12 @@ export function Table<T>(props: ITableProps<T>) {
         addSortBy,
         nextPage,
         pervPage,
-        changeRowsPerPage
+        changeRowsPerPage,
+        changeValuesNumber
       }}
     >
       <MUI.TableContainer>
-        <MUI.Table>
-          { children }
-        </MUI.Table>
+        { children }
       </MUI.TableContainer>
     </TableContext.Provider>
   )

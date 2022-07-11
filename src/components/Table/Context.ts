@@ -34,6 +34,7 @@ export interface ITableContext {
   nextPage: () => void;
   pervPage: () => void;
   changeRowsPerPage: (value: number) => void;
+  changeValuesNumber: (value: number) => void;
 }
 
 export const TableContext = React.createContext<ITableContext>({
@@ -47,5 +48,6 @@ export const TableContext = React.createContext<ITableContext>({
   addSortBy: (key: TKey, order = Order.ASC) => {},
   nextPage: () => {},
   pervPage: () => {},
-  changeRowsPerPage: (value: number) => {}
+  changeRowsPerPage: (value: number) => {},
+  changeValuesNumber: (value: number) => {}
 });

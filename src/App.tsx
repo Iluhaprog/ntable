@@ -4,127 +4,88 @@ import { Order } from './components/Table/Context';
 import { NumberFilter } from './components/Table/Filters/NumberFilter';
 import { useTable } from './components/Table/hooks';
 import { TableHead } from './components/Table/TableHead';
-import { IColumnRenderer, ITableColumnProps } from './components/Table/TableHeadColumn';
+import { IColumnRenderer } from './components/Table/TableHeadColumn';
+import { TablePagination } from './components/Table/TablePagination';
 import { ITableCellProps } from './components/Table/TableRow';
+import { TableWrapper } from './components/Table/TableWrapper';
 
-interface Row {
+interface IData {
   id: number;
-  firstName: string;
-  lastName: string;
-  age: number;
-  status: "success" | "wait" | "fail"; 
-}
-
-interface Test {
-  col1: string;
-  col2: string;
-  col3: number;
+  name: string;
+  status: "success" | "fail" | "cancel"
 }
 
 function App() {
-  const values = React.useMemo<Row[]>(() => ([
-    { id: 1, firstName: "name1", lastName: "last1", age: 11, status: "success" },
-    { id: 2, firstName: "name2", lastName: "last2", age: 13, status: "fail" },
-    { id: 3, firstName: "name3", lastName: "last3", age: 15, status: "success" },
-    { id: 4, firstName: "name4", lastName: "last4", age: 22, status: "wait" },
-    { id: 5, firstName: "name5", lastName: "last5", age: 16, status: "fail" },
-    { id: 6, firstName: "name6", lastName: "last6", age: 11, status: "success" },
-    { id: 7, firstName: "name7", lastName: "last7", age: 11, status: "fail" },
-    { id: 8, firstName: "name8", lastName: "last8", age: 23, status: "success" },
-    { id: 9, firstName: "name9", lastName: "last9", age: 10, status: "success" },
-    { id: 10, firstName: "name10", lastName: "last10", age: 26, status: "wait" },
-  ]), []);
+  const [data, setData ] = React.useState<IData[]>([]);
+  const [numberValues, setNumberValues] = React.useState<number>(0);
+  const [page, setPage] = React.useState(1);
+  const [limit, setLimit] = React.useState(10);
 
-  const values2 = React.useMemo<Test[]>(() => ([
-    { col1: "col-val-1", col2: "col-val-1", col3: 1 },
-    { col1: "col-val-2", col2: "col-val-2", col3: 2 },
-    { col1: "col-val-3", col2: "col-val-3", col3: 3 },
-    { col1: "col-val-4", col2: "col-val-4", col3: 4 },
-  ]), []);
+  React.useEffect(() => {
+    fetch("http://localhost:5000/values/" + page + "/" + limit)
+      .then(res => res.json())
+      .then(data => {
+        setData(data.data)
+        setNumberValues(data.numberElements)
+      });
+  }, [page, limit]);
 
-  const { Table: Table1, TableHeadColumn: TableHeadColumn1, TableRow: TableRow1 } = useTable<Row>(values);
-  const { Table: Table2, TableHeadColumn: TableHeadColumn2, TableRow: TableRow2 } = useTable<Test>(values2);
-
+  const {Table, TableHeadColumn, TableRow} = useTable<IData>();
 
   return (
     <div>
-      <Table1>
-        <TableHead>
-          <TableHeadColumn1 name="id" title="User Id" render={HeadRenderer} />
-          <TableHeadColumn1 name="firstName" title="First Name" />
-          <TableHeadColumn1 name="lastName" title="Last Name" />
-          <TableHeadColumn1 name="age" title="Age" render={AgeHeadRenderer} />
-          <TableHeadColumn1 name="status" title="Status" />
-        </TableHead>
-        <TableRow1
-          id={({ value }: any ) => <TableCell>{value}</TableCell>}
-          firstName={({ value }: any ) => <TableCell>{value}</TableCell>}
-          lastName={({ value }: any ) => <TableCell>{value}</TableCell>}
-          age={TColumn}
-          status={({ value }: any ) => <TableCell>{value}</TableCell>}
+      <Table values={data} initValuesNumber={numberValues}>
+        <TableWrapper>
+          <TableHead>
+            <TableHeadColumn name="id" title="ID" />
+            <TableHeadColumn name="name" title="Name" />
+            <TableHeadColumn name="status" title="Status" />
+          </TableHead>
+          <TableRow 
+            id={TColumn<IData>}
+            name={TColumn<IData>}
+            status={TColumn<IData>}
+          />
+        </TableWrapper>
+        <TablePagination
+          onPageChange={setPage}
+          onRowsPerPageChange={setLimit}
+          initRowsPerPage={10}
+          nextButton={NextButton}
+          prevButton={PervButton}
+          selectRowsPerPage={Select}
         />
-      </Table1>
-
-      <Table2>
-        <TableHead>
-          <TableHeadColumn2 name="col1" title="Column1" />
-          <TableHeadColumn2 name="col2" title="Column2" />
-          <TableHeadColumn2 name="col3" title="Column3" />
-        </TableHead>
-        <TableRow2 
-          col1={({ value }: any ) => <TableCell>{value}</TableCell>}
-          col2={({ value }: any ) => <TableCell>{value}</TableCell>}
-          col3={({ value }: any ) => <TableCell>{value}</TableCell>}
-        />
-      </Table2>
+      </Table>
     </div>
   );
 }
 
 export default App;
 
-function HeadRenderer(props: IColumnRenderer) {
-  const { value, setSortOrder } = props;
-
-  const [order, setOrder] = React.useState(Order.ASC);
-
-  const onClick = React.useCallback(() => {
-    if (order === Order.ASC) {
-      setSortOrder(Order.DESC);
-      setOrder(Order.DESC);
-    } else {
-      setSortOrder(Order.ASC);
-      setOrder(Order.ASC);
-    }
-  }, [order, setOrder, setSortOrder])
-
-  return (
-    <TableCell>
-      <button onClick={onClick}>
-        {value}{order === Order.ASC ? "+" : "-"}
-      </button>
-    </TableCell>
-  )
+function NextButton ({ onClick }: any) {
+  return <button onClick={onClick}>next</button>
 }
 
+function PervButton ({ onClick }: any) {
+  return <button onClick={onClick}>perv</button>
+}
 
-function AgeHeadRenderer(props: IColumnRenderer) {
-  const { value, setFilter } = props;
-
+function Select ({ onChange }: any) {
   return (
-    <TableCell>
-      {value}
-      <input 
-        placeholder='Age'
-        onChange={(e) => setFilter(new NumberFilter(+e.target.value))}      
-      />
-    </TableCell>
+    <select onChange={onChange}>
+      <option value={5}>5</option>
+      <option value={10}>10</option>
+      <option value={15}>15</option>
+      <option value={20}>20</option>
+      <option value={25}>25</option>
+
+    </select>
   )
 }
 
 function TColumn<T>(props: ITableCellProps<T>) {
   const { value } = props;
   return (
-    <TableCell>{value + " $"}</TableCell>
+    <TableCell>{value + ""}</TableCell>
   )
 }

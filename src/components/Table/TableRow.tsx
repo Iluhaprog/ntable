@@ -11,24 +11,26 @@ export type ITableRowProps<T> = {
 }
 
 export function TableRow<T extends Object>(props: ITableRowProps<T>) {
-  const { values, filters, sortBy } = React.useContext(TableContext);
-
-  const filteredRows: T[] = values
+  const { values, filters, sortBy, page, rowsPerPage } = React.useContext(TableContext);
+  
+  const filteredRows: T[] = React.useMemo(() => values
+    .slice((page - 1) * rowsPerPage, page * rowsPerPage)
     .filter((row) => applyFilters(row, filters))
-    .sort((a: T, b: T) => applySortBy<T>(a, b, sortBy));
+    .sort((a: T, b: T) => applySortBy<T>(a, b, sortBy))
+    , [values, filters, sortBy, page, rowsPerPage]);
 
   return (
     <MUI.TableBody>
       {
-        filteredRows.map((row: T) => {
+        filteredRows.map((row: T, index: number) => {
           const columns = Reflect.ownKeys(row);
 
           return (
-            <MUI.TableRow>
+            <MUI.TableRow key={Object.values(row).join("-") + index}>
               {
-                columns.map((column) => {
+                columns.map((column, index) => {
                   const Column = props[column as keyof T] as React.FC<{ value: any }>;
-                  return <Column value={row[column as keyof T]} />
+                  return <Column key={index + Object.values(row).join("|") + index} value={row[column as keyof T]} />
                 })
               }
             </MUI.TableRow>
